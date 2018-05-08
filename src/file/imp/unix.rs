@@ -1,7 +1,7 @@
 #[cfg(not(target_os = "redox"))]
 use libc::{c_char, c_int, link, rename, unlink, O_CLOEXEC, O_CREAT, O_EXCL, O_RDWR};
 use std::ffi::CString;
-use std::fs::{File, OpenOptions};
+use std::fs::{self, File, OpenOptions};
 use std::io;
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::io::{AsRawFd, FromRawFd, RawFd};
@@ -63,6 +63,12 @@ pub fn create_named(path: PathBuf) -> io::Result<File> {
     }
 }
 
+fn create_unlinked(path: &Path) -> io::Result<File> {
+    let f = create_named(path)?;
+    fs::remove_file(path)?;
+    Ok(f)
+}
+
 #[cfg(target_os = "linux")]
 pub fn create(dir: &Path) -> io::Result<File> {
     use libc::O_TMPFILE;
@@ -86,7 +92,7 @@ pub fn create(dir: &Path) -> io::Result<File> {
 
 fn create_unix(dir: &Path) -> io::Result<File> {
     util::create_helper(dir, ".tmp", "", ::NUM_RAND_CHARS, |path| {
-        create_named(&path)
+        create_unlinked(&path)
     })
 }
 
