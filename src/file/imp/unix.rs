@@ -65,7 +65,9 @@ pub fn create_named(path: PathBuf) -> io::Result<File> {
 
 fn create_unlinked(path: &Path) -> io::Result<File> {
     let f = create_named(path)?;
-    fs::remove_file(path)?;
+    // don't care whether the path has already been unlinked,
+    // but perhaps there are some IO error conditions we should send up?
+    let _ = fs::remove_file(path);
     Ok(f)
 }
 
